@@ -7,7 +7,8 @@ import (
 )
 
 type Config struct {
-	Repos []ResticRepository `yaml:"repos"`
+	RefreshMinutes uint               `yaml:"refreshMinutes"`
+	Repos          []ResticRepository `yaml:"repos"`
 }
 
 type ResticRepository struct {
@@ -28,6 +29,10 @@ func ParseConfig(filename string) (*Config, error) {
 
 	if err := yaml.NewDecoder(f).Decode(c); err != nil {
 		return nil, err
+	}
+
+	if c.RefreshMinutes == 0 {
+		c.RefreshMinutes = 10
 	}
 
 	return c, nil
