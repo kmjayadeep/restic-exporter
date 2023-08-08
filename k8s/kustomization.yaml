@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: monitoring
+
+resources:
+  - deploy.yaml
+
+secretGenerator:
+- name: restic-config
+  files:
+  - config.yaml

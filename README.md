@@ -1,6 +1,6 @@
 # Restic Exporter
 
-A prometheus exporter for monitoring restic repository stats. Currently limited to repos using S3 compatible buckets as backend. The functionality can be easily extended to other providers if there is enough interest. This project was mainly done to monitor my [homelab(https://github.com/kmjayadeep/homelab-k8s) backups and fire alerts if the backups are not up-to-date
+A prometheus exporter for monitoring restic repository stats. Currently limited to repos using S3 compatible buckets as backend. The functionality can be easily extended to other providers if there is enough interest. This project was mainly done to monitor my [homelab](https://github.com/kmjayadeep/homelab-k8s) backups and fire alerts if the backups are not up-to-date
 
 ## Exposed metrics example
 
@@ -45,3 +45,17 @@ docker run -p 18090:18090  -v ./config.yaml:/app/config.yaml kmjayadeep/restic-e
 ```
 
 It will expose the metrics on port 18090 which can be scrapped by prometheus. The stats are refreshed every 10 mins by default and can be customized in the config file.
+
+### Using docker-compose
+
+```
+docker-compose up
+```
+
+### Kubernetes
+
+You can find the Kubernetes kustomize manifests under `k8s` folder
+
+```
+kubectl apply -k k8s/
+```
