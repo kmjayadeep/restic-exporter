@@ -1,0 +1,10 @@
+version: '3'
+services:
+  restic-exporter:
+    build: .
+    image: kmjayadeep/restic-exporter:0.1
+    ports:
+    - "18090:18090"
+    volumes:
+      - ./config.yaml:/app/config.yaml
+
