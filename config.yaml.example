@@ -1,0 +1,6 @@
+repos:
+- accessKey: accesskey
+  secretKey: secretKey
+  endpoint: "s3:https://host/bucketname"
+  resticPassword: "yoursecret"
+  name: "my-backup"
