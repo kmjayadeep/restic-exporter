@@ -23,7 +23,7 @@ type LastSnapshot struct {
 
 type Stats struct {
 	ObjectsCount int64
-	Size         string
+	Size         int64
 	LastSnapshot LastSnapshot
 }
 
@@ -73,24 +73,22 @@ func FetchStats(r config.ResticRepository) (*Stats, error) {
 		Bucket: aws.String(bucket),
 	}
 
-	tsize := int64(0)
+	size := int64(0)
 	count := int64(0)
 
 	svc.ListObjectsV2Pages(in,
 		func(page *s3.ListObjectsV2Output, lastPage bool) bool {
 			for _, v := range page.Contents {
-				tsize = tsize + *v.Size
+				size = size + *v.Size
 			}
 
 			count = count + *page.KeyCount
 			return !lastPage
 		})
 
-	sizeingb := float64(tsize) / (1024 * 1024 * 1024)
-
 	return &Stats{
 		ObjectsCount: count,
-		Size:         fmt.Sprintf("%.2fGB", sizeingb),
+		Size:         size,
 		LastSnapshot: last,
 	}, nil
 }

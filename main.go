@@ -1,15 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"log"
+	"net/http"
 	"time"
 
-	// "github.com/aws/aws-sdk-go/aws"
-	// "github.com/aws/aws-sdk-go/aws/credentials"
-	// "github.com/aws/aws-sdk-go/aws/session"
-	// "github.com/aws/aws-sdk-go/service/s3"
 	"github.com/kmjayadeep/restic-monitoring/internal/config"
 	"github.com/kmjayadeep/restic-monitoring/internal/stats"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type LastSnapshot struct {
@@ -24,13 +22,8 @@ func main() {
 		panic(err)
 	}
 
-	for _, repo := range c.Repos {
-		s, err := stats.FetchStats(repo)
-		if err != nil {
-			fmt.Println("unable to fetch stats for ", repo.Name)
-			continue
-		}
-		fmt.Printf("%+v", s)
-	}
+	go stats.Run(c)
 
+	http.Handle("/metrics", promhttp.Handler())
+	log.Fatal(http.ListenAndServe(":18090", nil))
 }
