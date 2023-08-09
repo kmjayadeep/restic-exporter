@@ -45,7 +45,7 @@ var (
 		Name:    "restic_repo_stats_fetch_duration",
 		Help:    "Amount of time taken to fetch restic repo stats",
 		Buckets: []float64{.1, .2, .4, 1, 3, 8, 20, 60, 120},
-	}, []string{"repo"})
+	}, []string{"repo", "status"})
 )
 
 func RefreshMetrics(c *config.Config) {
@@ -53,12 +53,14 @@ func RefreshMetrics(c *config.Config) {
 
 		go func(repo config.ResticRepository) {
 			t := time.Now()
-			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 			defer cancel()
 			s, err := FetchStats(ctx, repo)
 			if err != nil {
 				fmt.Println("unable to fetch stats for ", repo.Name, err)
+				fmt.Println("time spent", time.Since(t).Seconds())
 				resticRepoRefreshFailTotal.WithLabelValues(repo.Name).Inc()
+				resticRepoStatsDuration.WithLabelValues(repo.Name, "fail").Observe(float64(time.Since(t).Seconds()))
 				return
 			}
 			fmt.Println(repo.Name, s)
@@ -66,7 +68,7 @@ func RefreshMetrics(c *config.Config) {
 			resticS3ObjectCount.WithLabelValues(repo.Name).Set(float64(s.ObjectsCount))
 			resticS3Size.WithLabelValues(repo.Name).Set(float64(s.Size))
 			resticRepoLastSnapshot.WithLabelValues(repo.Name, s.LastSnapshot.HostName, s.LastSnapshot.ShortID).Set(float64(s.LastSnapshot.Time.Unix()))
-			resticRepoStatsDuration.WithLabelValues(repo.Name).Observe(float64(time.Since(t).Seconds()))
+			resticRepoStatsDuration.WithLabelValues(repo.Name, "success").Observe(float64(time.Since(t).Seconds()))
 
 		}(repo)
 	}
