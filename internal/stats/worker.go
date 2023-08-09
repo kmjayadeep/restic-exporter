@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -49,18 +50,25 @@ var (
 
 func RefreshMetrics(c *config.Config) {
 	for _, repo := range c.Repos {
-		t := time.Now()
-		s, err := FetchStats(repo)
-		if err != nil {
-			fmt.Println("unable to fetch stats for ", repo.Name)
-			resticRepoRefreshFailTotal.WithLabelValues(repo.Name).Inc()
-			continue
-		}
-		resticRepoRefreshTotal.WithLabelValues(repo.Name).Inc()
-		resticS3ObjectCount.WithLabelValues(repo.Name).Set(float64(s.ObjectsCount))
-		resticS3Size.WithLabelValues(repo.Name).Set(float64(s.Size))
-		resticRepoLastSnapshot.WithLabelValues(repo.Name, s.LastSnapshot.HostName, s.LastSnapshot.ShortID).Set(float64(s.LastSnapshot.Time.Unix()))
-		resticRepoStatsDuration.WithLabelValues(repo.Name).Observe(float64(time.Since(t).Seconds()))
+
+		go func(repo config.ResticRepository) {
+			t := time.Now()
+			ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+			defer cancel()
+			s, err := FetchStats(ctx, repo)
+			if err != nil {
+				fmt.Println("unable to fetch stats for ", repo.Name, err)
+				resticRepoRefreshFailTotal.WithLabelValues(repo.Name).Inc()
+				return
+			}
+			fmt.Println(repo.Name, s)
+			resticRepoRefreshTotal.WithLabelValues(repo.Name).Inc()
+			resticS3ObjectCount.WithLabelValues(repo.Name).Set(float64(s.ObjectsCount))
+			resticS3Size.WithLabelValues(repo.Name).Set(float64(s.Size))
+			resticRepoLastSnapshot.WithLabelValues(repo.Name, s.LastSnapshot.HostName, s.LastSnapshot.ShortID).Set(float64(s.LastSnapshot.Time.Unix()))
+			resticRepoStatsDuration.WithLabelValues(repo.Name).Observe(float64(time.Since(t).Seconds()))
+
+		}(repo)
 	}
 	resticRefreshTotal.Inc()
 }

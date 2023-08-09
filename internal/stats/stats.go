@@ -1,8 +1,8 @@
 package stats
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"os/exec"
 	"strings"
@@ -27,21 +27,21 @@ type Stats struct {
 	LastSnapshot LastSnapshot
 }
 
-func FetchStats(r config.ResticRepository) (*Stats, error) {
-	cmd := exec.Command("restic", "snapshots", "latest", "--json")
+func FetchStats(ctx context.Context, r config.ResticRepository) (*Stats, error) {
+	cmd := exec.CommandContext(ctx, "restic", "snapshots", "latest", "--json")
 
 	cmd.Env = append(cmd.Environ(), "AWS_ACCESS_KEY_ID="+r.AccessKey, "AWS_SECRET_ACCESS_KEY="+r.SecretKey, "RESTIC_PASSWORD="+r.ResticPassword, "RESTIC_REPOSITORY="+r.Endpoint)
 
 	out, err := cmd.Output()
 
 	if err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	snaps := []LastSnapshot{}
 
 	if err := json.Unmarshal(out, &snaps); err != nil {
-		return nil, nil
+		return nil, err
 	}
 
 	last := LastSnapshot{}
@@ -56,8 +56,6 @@ func FetchStats(r config.ResticRepository) (*Stats, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Printf("proto: %q, endpoint: %q, bucket: %q", u.Scheme, u.Host, u.Path)
 
 	bucket := u.Path
 
@@ -76,7 +74,7 @@ func FetchStats(r config.ResticRepository) (*Stats, error) {
 	size := int64(0)
 	count := int64(0)
 
-	svc.ListObjectsV2Pages(in,
+	svc.ListObjectsV2PagesWithContext(ctx, in,
 		func(page *s3.ListObjectsV2Output, lastPage bool) bool {
 			for _, v := range page.Contents {
 				size = size + *v.Size
