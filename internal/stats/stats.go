@@ -15,7 +15,7 @@ import (
 	"github.com/kmjayadeep/restic-monitoring/internal/config"
 )
 
-type LastSnapshot struct {
+type Snapshot struct {
 	Time     time.Time `json:"time"`
 	ShortID  string    `json:"short_id"`
 	HostName string    `json:"hostname"`
@@ -24,11 +24,11 @@ type LastSnapshot struct {
 type Stats struct {
 	ObjectsCount int64
 	Size         int64
-	LastSnapshot LastSnapshot
+	Snapshots    []Snapshot
 }
 
 func FetchStats(ctx context.Context, r config.ResticRepository) (*Stats, error) {
-	cmd := exec.CommandContext(ctx, "restic", "snapshots", "latest", "--json")
+	cmd := exec.CommandContext(ctx, "restic", "snapshots", "--json")
 
 	cmd.Env = append(cmd.Environ(), "AWS_ACCESS_KEY_ID="+r.AccessKey, "AWS_SECRET_ACCESS_KEY="+r.SecretKey, "RESTIC_PASSWORD="+r.ResticPassword, "RESTIC_REPOSITORY="+r.Endpoint)
 
@@ -38,16 +38,10 @@ func FetchStats(ctx context.Context, r config.ResticRepository) (*Stats, error) 
 		return nil, err
 	}
 
-	snaps := []LastSnapshot{}
+	snaps := []Snapshot{}
 
 	if err := json.Unmarshal(out, &snaps); err != nil {
 		return nil, err
-	}
-
-	last := LastSnapshot{}
-
-	if len(snaps) > 0 {
-		last = snaps[0]
 	}
 
 	e := strings.TrimPrefix(r.Endpoint, "s3:")
@@ -87,6 +81,6 @@ func FetchStats(ctx context.Context, r config.ResticRepository) (*Stats, error) 
 	return &Stats{
 		ObjectsCount: count,
 		Size:         size,
-		LastSnapshot: last,
+		Snapshots:    snaps,
 	}, nil
 }
