@@ -48,8 +48,8 @@ var (
 
 	resticRepoLastSnapshot = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "restic_repo_last_snapshot",
-		Help: "Last snapshot in the restic repo",
-	}, []string{"repo", "host", "shortId"})
+		Help: "Last snapshot time in the restic repo",
+	}, []string{"repo", "host"})
 
 	resticRepoStatsDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "restic_repo_stats_fetch_duration",
@@ -83,7 +83,7 @@ func RefreshMetrics(c *config.Config) {
 
 			if len(s.Snapshots) > 0 {
 				last := s.Snapshots[len(s.Snapshots)-1]
-				resticRepoLastSnapshot.WithLabelValues(repo.Name, last.HostName, last.ShortID).Set(float64(last.Time.Unix()))
+				resticRepoLastSnapshot.WithLabelValues(repo.Name, last.HostName).Set(float64(last.Time.Unix()))
 			}
 
 			resticRepoStatsDuration.WithLabelValues(repo.Name, "success").Observe(float64(time.Since(t).Seconds()))
