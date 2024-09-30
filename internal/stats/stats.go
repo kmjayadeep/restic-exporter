@@ -28,7 +28,7 @@ type Stats struct {
 }
 
 func FetchStats(ctx context.Context, r config.ResticRepository) (*Stats, error) {
-	cmd := exec.CommandContext(ctx, "restic", "snapshots", "--json")
+	cmd := exec.CommandContext(ctx, "restic", "snapshots", "--no-lock", "--json")
 
 	cmd.Env = append(cmd.Environ(), "AWS_ACCESS_KEY_ID="+r.AccessKey, "AWS_SECRET_ACCESS_KEY="+r.SecretKey, "RESTIC_PASSWORD="+r.ResticPassword, "RESTIC_REPOSITORY="+r.Endpoint)
 
