@@ -18,6 +18,7 @@ type ResticRepository struct {
 	Endpoint       string `yaml:"endpoint"`
 	ResticPassword string `yaml:"resticPassword"`
 	S3SizeLimit    uint   `yaml:"s3SizeLimit"`
+	Region         string `yaml:"region"`
 }
 
 func ParseConfig(filename string) (*Config, error) {

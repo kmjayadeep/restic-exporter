@@ -3,6 +3,7 @@ package stats
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"os/exec"
 	"strings"
@@ -56,7 +57,7 @@ func FetchStats(ctx context.Context, r config.ResticRepository) (*Stats, error) 
 	sess := session.Must(session.NewSession(&aws.Config{
 		Credentials: credentials.NewStaticCredentials(r.AccessKey, r.SecretKey, ""),
 		Endpoint:    aws.String(u.Host),
-		Region:      aws.String("us-west-000"),
+		Region:      aws.String(r.Region),
 	}))
 
 	svc := s3.New(sess)
@@ -64,6 +65,8 @@ func FetchStats(ctx context.Context, r config.ResticRepository) (*Stats, error) 
 	in := &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
 	}
+
+	fmt.Printf("Fetching stats for repo %s, bucket %s\n", r.Name, bucket)
 
 	size := int64(0)
 	count := int64(0)
@@ -73,6 +76,7 @@ func FetchStats(ctx context.Context, r config.ResticRepository) (*Stats, error) 
 			for _, v := range page.Contents {
 				size = size + *v.Size
 			}
+			fmt.Printf("Fetched %d objects, size %d bytes\n", len(page.Contents), size)
 
 			count = count + *page.KeyCount
 			return !lastPage
