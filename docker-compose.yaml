@@ -2,7 +2,7 @@ version: '3'
 services:
   restic-exporter:
     build: .
-    image: kmjayadeep/restic-exporter:0.6
+    image: kmjayadeep/restic-exporter:0.7.0
     ports:
     - "18090:18090"
     volumes:
